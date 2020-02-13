@@ -19,12 +19,13 @@ class MyApp extends StatelessWidget {
   }
 }
 
-Map<String, Widget> navMenuItems = Map()
-  ..putIfAbsent("Home", () => Page("Home", "assets/foreground.png"))
+Map<String, Function> navMenuItems = Map()
   ..putIfAbsent(
-      "Furniture", () => Page("Furniture", "assets/foreground-blue.png"))
-  ..putIfAbsent(
-      "Delivery", () => Page("Delivery", "assets/foreground-pink.png"));
+      "Home", () => (delta) => Page("Home", "assets/foreground.png", delta))
+  ..putIfAbsent("Furniture",
+      () => (delta) => Page("Furniture", "assets/foreground-blue.png", delta))
+  ..putIfAbsent("Delivery",
+      () => (delta) => Page("Delivery", "assets/foreground-pink.png", delta));
 
 class NavDrawer extends StatefulWidget {
   @override
@@ -47,7 +48,8 @@ class _NavDrawerState extends State<StatefulWidget>
   void initState() {
     super.initState();
     controller = AnimationController(
-        duration: const Duration(milliseconds: 1000), vsync: this);//this is super long just to show the animation
+        duration: const Duration(milliseconds: 800),
+        vsync: this); //this is super long just to show the animation
     final Animation ease =
         CurvedAnimation(parent: controller, curve: Curves.easeInOutSine);
     animation = Tween<double>(begin: 0, end: 1).animate(ease)
@@ -86,8 +88,8 @@ class _NavDrawerState extends State<StatefulWidget>
 
   @override
   Widget build(BuildContext context) {
-    var currentPageWidget = navMenuItems[currentPageKey];
-    var leavingPageWidget = navMenuItems[oldPageKey];
+    Widget currentPageWidget = navMenuItems[currentPageKey](animation.value);
+    Widget leavingPageWidget = navMenuItems[oldPageKey](animation.value);
     return Scaffold(
       body: DrawerControls(
           toggleDrawer: toggleDrawer,
@@ -108,7 +110,7 @@ class _NavDrawerState extends State<StatefulWidget>
   }
 }
 
-final fullyOpenTranslationX = 150;
+final fullyOpenTranslationX = 180;
 final fullyOpenRotation = -10 / 180 * 3.14;
 
 class CurrentPageTransform extends StatelessWidget {
@@ -218,22 +220,43 @@ class DrawerControls extends InheritedWidget {
 class Page extends StatelessWidget {
   final String title;
   final String image;
+  final drawerDelta;
 
-  Page(this.title, this.image);
+  Page(this.title, this.image, this.drawerDelta);
 
   @override
   Widget build(BuildContext context) {
+    var whiteShadowDelta = borderRadius / 2 * drawerDelta;
+    var whiteShadowOffset = Offset(-2 * whiteShadowDelta, 0);
+
     return Container(
       decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(borderRadius),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(70), blurRadius: 20.0,
-              // has the effect of softening the shadow
-              spreadRadius: 2.0,
-              // has the effect of extending the shadow)
-            )
+            if (drawerDelta > 0) ...[
+              //dont draw shadows if drawer is collapsed
+              BoxShadow(
+                  color: Colors.black.withAlpha(70),
+                  blurRadius: 20.0,
+                  // has the effect of softening the shadow
+                  spreadRadius: -whiteShadowDelta,
+                  offset: whiteShadowOffset
+                  // has the effect of extending the shadow)
+                  ),
+              BoxShadow(
+                  color: Colors.white,
+                  blurRadius: 0,
+                  spreadRadius: -whiteShadowDelta,
+                  offset: whiteShadowOffset),
+              BoxShadow(
+                color: Colors.black.withAlpha(70),
+                blurRadius: 20.0,
+                // has the effect of softening the shadow
+                spreadRadius: 2,
+                // has the effect of extending the shadow)
+              ),
+            ]
           ]),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
@@ -248,13 +271,17 @@ class Page extends StatelessWidget {
                 children: <Widget>[
                   IconButton(
                     icon: Icon(Icons.menu),
+                    iconSize: 40,
                     color: Colors.white,
                     padding: EdgeInsets.all(30),
                     onPressed: () {
                       DrawerControls.of(context).toggleDrawer();
                     },
                   ),
-                  Padding(padding: const EdgeInsets.all(30), child: PageTitle())
+                  Padding(
+                      padding: const EdgeInsets.all(30), child: PageTitle()),
+                  Spacer(),
+                  BottomButtons()
                 ],
               ),
             )
@@ -279,6 +306,35 @@ class PageTitle extends StatelessWidget {
           TextSpan(text: ' that fit\nyour '),
           TextSpan(text: 'style', style: highlight)
         ],
+      ),
+    );
+  }
+}
+
+class BottomButtons extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
+      child: Container(
+        color: Colors.white,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            IconButton(
+              padding: EdgeInsets.all(25),
+              icon: Icon(Icons.star),
+            ),
+            IconButton(
+              padding: EdgeInsets.all(25),
+              icon: Icon(Icons.shopping_cart),
+            ),
+            IconButton(
+              padding: EdgeInsets.all(25),
+              icon: Icon(Icons.person),
+            )
+          ],
+        ),
       ),
     );
   }
