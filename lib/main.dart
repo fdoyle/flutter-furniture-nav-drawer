@@ -48,7 +48,7 @@ class _NavDrawerState extends State<StatefulWidget>
   void initState() {
     super.initState();
     controller = AnimationController(
-        duration: const Duration(milliseconds: 800),
+        duration: const Duration(milliseconds: 1300),
         vsync: this); //this is super long just to show the animation
     final Animation ease =
         CurvedAnimation(parent: controller, curve: Curves.easeInOutSine);
