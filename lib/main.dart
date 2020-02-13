@@ -5,7 +5,6 @@ void main() => runApp(MyApp());
 double borderRadius = 30;
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -21,18 +20,11 @@ class MyApp extends StatelessWidget {
 }
 
 Map<String, Widget> navMenuItems = Map()
+  ..putIfAbsent("Home", () => Page("Home", "assets/foreground.png"))
   ..putIfAbsent(
-      "Home",
-          () => Page("Home",
-          "https://images.saatchiart.com/saatchi/927428/art/4515977/3585817-WZEPJOJM-7.jpg"))
+      "Furniture", () => Page("Furniture", "assets/foreground-blue.png"))
   ..putIfAbsent(
-      "Furniture",
-          () => Page("Furniture",
-          "https://cdn.shopify.com/s/files/1/1083/5404/products/101606_1024x1024.jpg?v=1479668978"))
-  ..putIfAbsent(
-      "Delivery",
-          () => Page("Furniture",
-          "https://images1.novica.net/pictures/27/p345037_2a.jpg"));
+      "Delivery", () => Page("Delivery", "assets/foreground-pink.png"));
 
 class NavDrawer extends StatefulWidget {
   @override
@@ -46,7 +38,7 @@ class _NavDrawerState extends State<StatefulWidget>
   var changingPages = false;
   var position = 0.0; //0 is closed, 1 is open;
   AnimationController
-  controller; //forward opens the drawer, backwards closes it
+      controller; //forward opens the drawer, backwards closes it
   Animation<double> animation;
   Function toggleDrawer;
   Function changePage;
@@ -55,9 +47,9 @@ class _NavDrawerState extends State<StatefulWidget>
   void initState() {
     super.initState();
     controller = AnimationController(
-        duration: const Duration(milliseconds: 300), vsync: this);
+        duration: const Duration(milliseconds: 1000), vsync: this);//this is super long just to show the animation
     final Animation ease =
-    CurvedAnimation(parent: controller, curve: Curves.easeInOutSine);
+        CurvedAnimation(parent: controller, curve: Curves.easeInOutSine);
     animation = Tween<double>(begin: 0, end: 1).animate(ease)
       ..addListener(() {
         setState(() {
@@ -97,24 +89,27 @@ class _NavDrawerState extends State<StatefulWidget>
     var currentPageWidget = navMenuItems[currentPageKey];
     var leavingPageWidget = navMenuItems[oldPageKey];
     return Scaffold(
-        body: DrawerControls(
-            toggleDrawer: toggleDrawer,
-            changePage: changePage,
-            child: Stack(fit: StackFit.expand, children: <Widget>[
+      body: DrawerControls(
+          toggleDrawer: toggleDrawer,
+          changePage: changePage,
+          child: Stack(fit: StackFit.expand, children: <Widget>[
             Image.asset("assets/menu-background.png", fit: BoxFit.cover),
             SafeArea(child: NavMenuColumn()),
             if (!changingPages)
-        CurrentPageTransform(animation.value, child: currentPageWidget)
-    else ...[
-    NewPageEnteringTransform(animation.value,
-    child: currentPageWidget),
-    OldPageLeavingTransform(animation.value,
-    child: leavingPageWidget),
-    ]
-    ])),
+              CurrentPageTransform(animation.value, child: currentPageWidget)
+            else ...[
+              OldPageLeavingTransform(animation.value,
+                  child: leavingPageWidget),
+              NewPageEnteringTransform(animation.value,
+                  child: currentPageWidget),
+            ]
+          ])),
     );
   }
 }
+
+final fullyOpenTranslationX = 150;
+final fullyOpenRotation = -10 / 180 * 3.14;
 
 class CurrentPageTransform extends StatelessWidget {
   final double delta;
@@ -125,9 +120,9 @@ class CurrentPageTransform extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Transform.translate(
-        offset: Offset(180 * delta, 0),
+        offset: Offset(fullyOpenTranslationX * delta, 0),
         child: Transform.rotate(
-            angle: -10 / 180 * 3.14 * delta,
+            angle: fullyOpenRotation * delta,
             child: Transform.scale(scale: 1 - 0.2 * delta, child: child)));
   }
 }
@@ -141,11 +136,11 @@ class OldPageLeavingTransform extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Transform.translate(
-        offset: Offset(180 + (1 - delta) * 500, 0),
+        offset: Offset(fullyOpenTranslationX + (1 - delta) * 500, 0),
         child: Transform.rotate(
-            angle: -10 / 180 * 3.14,
+            angle: fullyOpenRotation,
             child:
-            Transform.scale(scale: 0.8 - 0.3 * (1 - delta), child: child)));
+                Transform.scale(scale: 0.8 - 0.3 * (1 - delta), child: child)));
   }
 }
 
@@ -160,7 +155,7 @@ class NewPageEnteringTransform extends StatelessWidget {
     return Transform.translate(
         offset: Offset(500 * delta, 0),
         child: Transform.rotate(
-            angle: -10 / 180 * 3.14 * delta,
+            angle: fullyOpenRotation * delta,
             child: Transform.scale(scale: 1 - 0.2 * delta, child: child)));
   }
 }
@@ -169,41 +164,41 @@ class NavMenuColumn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
+      padding: const EdgeInsets.all(20),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-          CircleAvatar(
-          radius: 30,
-          backgroundImage: NetworkImage("https://images.pexels.com/photos/736716/pexels-photo-736716.jpeg"),
-        ),
-
-        Padding(
-          padding: const EdgeInsets.only(top: 10, bottom: 20),
-          child: Text(
-            "John Wink",
-            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-          ),
-        ),
-        ...navMenuItems.entries.map((entry) {
-      return GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () {
-          DrawerControls.of(context).changePage(entry.key);
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Text(
-            entry.key,
-            style: TextStyle(fontSize: 18),
-          ),
-        ),
-      );
-    }).toList()
-    ]),
+            CircleAvatar(
+              radius: 30,
+              backgroundImage: NetworkImage(
+                  "https://images.pexels.com/photos/736716/pexels-photo-736716.jpeg"),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 10, bottom: 20),
+              child: Text(
+                "John Wink",
+                style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+              ),
+            ),
+            ...navMenuItems.entries.map((entry) {
+              return GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () {
+                  DrawerControls.of(context).changePage(entry.key);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Text(
+                    entry.key,
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
+              );
+            }).toList()
+          ]),
     );
-    }
+  }
 }
 
 class DrawerControls extends InheritedWidget {
@@ -222,9 +217,9 @@ class DrawerControls extends InheritedWidget {
 
 class Page extends StatelessWidget {
   final String title;
-  final String imageUrl;
+  final String image;
 
-  Page(this.title, this.imageUrl);
+  Page(this.title, this.image);
 
   @override
   Widget build(BuildContext context) {
@@ -246,15 +241,44 @@ class Page extends StatelessWidget {
           fit: StackFit.expand,
           children: <Widget>[
 //            Image.network(imageUrl, fit: BoxFit.cover),
-            Image.asset("assets/foreground.png", fit: BoxFit.cover),
-            IconButton(
-              icon: Icon(Icons.menu),
-              onPressed: () {
-                DrawerControls.of(context).toggleDrawer();
-              },
+            Image.asset(image, fit: BoxFit.cover),
+            SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  IconButton(
+                    icon: Icon(Icons.menu),
+                    color: Colors.white,
+                    padding: EdgeInsets.all(30),
+                    onPressed: () {
+                      DrawerControls.of(context).toggleDrawer();
+                    },
+                  ),
+                  Padding(padding: const EdgeInsets.all(30), child: PageTitle())
+                ],
+              ),
             )
           ],
         ),
+      ),
+    );
+  }
+}
+
+class PageTitle extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    var highlight = TextStyle(color: Colors.white);
+    return RichText(
+      text: TextSpan(
+        // Note: Styles for TextSpans must be explicitly defined.
+        // Child text spans will inherit styles from parent
+        style: TextStyle(fontSize: 30.0, color: Colors.white.withAlpha(122)),
+        children: <TextSpan>[
+          TextSpan(text: 'Furniture', style: highlight),
+          TextSpan(text: ' that fit\nyour '),
+          TextSpan(text: 'style', style: highlight)
+        ],
       ),
     );
   }
